@@ -15,11 +15,19 @@ const retellClient = axios.create({
 export async function createCall(
   phoneNumber: string,
   agentId: string,
+  fromNumber?: string,
   metadata?: Record<string, any>
 ) {
   try {
+    // Use provided fromNumber or fall back to env variable
+    const from = fromNumber || process.env.RETELL_PHONE_NUMBER;
+
+    if (!from) {
+      throw new Error('RETELL_PHONE_NUMBER is required to make outbound calls. Please set it in environment variables or pass it as a parameter.');
+    }
+
     const response = await retellClient.post('/create-phone-call', {
-      from_number: process.env.RETELL_PHONE_NUMBER,
+      from_number: from,
       to_number: phoneNumber,
       agent_id: agentId,
       metadata,
