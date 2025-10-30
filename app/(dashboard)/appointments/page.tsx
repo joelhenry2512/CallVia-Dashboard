@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatDateTime, calculateShowRate } from '@/lib/utils';
 import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -35,6 +35,7 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     fetchAppointments();

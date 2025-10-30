@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatDate, formatPhoneNumber } from '@/lib/utils';
 import { Search, Filter, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -36,6 +36,7 @@ export default function LeadsPage() {
   const [campaignFilter, setCampaignFilter] = useState('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string }>>([]);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     fetchLeads();
@@ -94,7 +95,7 @@ export default function LeadsPage() {
     try {
       const { error } = await supabase
         .from('leads')
-        .update({ status: newStatus })
+        .update({ status: newStatus } as any)
         .eq('id', leadId);
 
       if (error) throw error;

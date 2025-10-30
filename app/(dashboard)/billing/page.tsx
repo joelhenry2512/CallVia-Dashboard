@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { DollarSign, TrendingUp, CreditCard, FileText, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -48,6 +48,7 @@ export default function BillingPage() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [usageRecords, setUsageRecords] = useState<UsageRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     fetchBillingData();

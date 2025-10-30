@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (campaignId) {
       const { data: campaign } = await supabase
         .from('campaigns')
-        .select('total_leads')
+        .select('total_leads, leads_remaining')
         .eq('id', campaignId)
         .single();
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
           .from('campaigns')
           .update({
             total_leads: (campaign.total_leads || 0) + inserted.length,
-            leads_remaining: supabase.raw('leads_remaining + ' + inserted.length),
+            leads_remaining: (campaign.leads_remaining || 0) + inserted.length,
           })
           .eq('id', campaignId);
       }

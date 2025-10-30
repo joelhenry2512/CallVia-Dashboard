@@ -56,6 +56,9 @@ async function handleBookingCreated(payload: any) {
     attendees,
     metadata,
   } = payload;
+  
+  const startTimeDate = new Date(startTime);
+  const endTimeDate = new Date(endTime);
 
   // Extract lead info from attendees
   const attendee = attendees[0];
@@ -82,7 +85,7 @@ async function handleBookingCreated(payload: any) {
       campaign_id: lead.campaign_id,
       calcom_booking_id: uid,
       scheduled_at: startTime,
-      duration_minutes: Math.round((new Date(endTime) - new Date(startTime)) / 60000),
+      duration_minutes: Math.round((endTimeDate.getTime() - startTimeDate.getTime()) / 60000),
       status: 'scheduled',
     })
     .select()
@@ -98,11 +101,14 @@ async function handleBookingCreated(payload: any) {
     .eq('id', lead.id);
 
   // Schedule reminders
-  await scheduleReminders(appointment.id, startTime);
+  await scheduleReminders(appointment.id, startTimeDate.toISOString());
 }
 
 async function handleBookingRescheduled(payload: any) {
   const { uid, startTime, endTime } = payload;
+  
+  const startTimeDate = new Date(startTime);
+  const endTimeDate = new Date(endTime);
 
   const { data: appointment } = await supabase
     .from('appointments')
@@ -117,7 +123,7 @@ async function handleBookingRescheduled(payload: any) {
     .from('appointments')
     .update({
       scheduled_at: startTime,
-      duration_minutes: Math.round((new Date(endTime) - new Date(startTime)) / 60000),
+      duration_minutes: Math.round((endTimeDate.getTime() - startTimeDate.getTime()) / 60000),
       status: 'rescheduled',
       reschedule_count: appointment.reschedule_count + 1,
       reminder_24h_sent: false,
@@ -127,7 +133,7 @@ async function handleBookingRescheduled(payload: any) {
     .eq('id', appointment.id);
 
   // Reschedule reminders
-  await scheduleReminders(appointment.id, startTime);
+  await scheduleReminders(appointment.id, startTimeDate.toISOString());
 }
 
 async function handleBookingCancelled(payload: any) {

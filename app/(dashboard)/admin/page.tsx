@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Users, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<Record<string, ClientStats>>({});
   const [loading, setLoading] = useState(true);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     fetchClients();
@@ -53,7 +54,7 @@ export default function AdminPage() {
       setClients(clientsData || []);
 
       // Fetch stats for each client
-      const statsPromises = (clientsData || []).map(async (client) => {
+      const statsPromises = (clientsData || []).map(async (client: Client) => {
         // Get call logs count
         const { count: callsCount } = await supabase
           .from('call_logs')
@@ -80,7 +81,7 @@ export default function AdminPage() {
           .eq('client_id', client.id)
           .eq('status', 'paid');
 
-        const totalSpend = invoices?.reduce((sum, inv) => sum + inv.amount, 0) || 0;
+        const totalSpend = (invoices || []).reduce((sum, inv: any) => sum + inv.amount, 0);
 
         return {
           client_id: client.id,
@@ -109,7 +110,7 @@ export default function AdminPage() {
 
   async function toggleClientStatus(clientId: string, currentStatus: string) {
     try {
-      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const newStatus = (currentStatus === 'active' ? 'inactive' : 'active') as 'active' | 'inactive';
 
       const { error } = await supabase
         .from('clients')

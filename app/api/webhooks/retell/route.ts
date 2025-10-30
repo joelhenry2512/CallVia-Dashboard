@@ -54,7 +54,7 @@ async function handleCallStarted(payload: any) {
   // Find the lead by phone number
   const { data: lead } = await supabase
     .from('leads')
-    .select('id, client_id, campaign_id')
+    .select('id, client_id, campaign_id, call_attempts')
     .eq('phone', to_number)
     .single();
 
@@ -79,7 +79,7 @@ async function handleCallStarted(payload: any) {
     .from('leads')
     .update({
       status: 'contacted',
-      call_attempts: supabase.raw('call_attempts + 1'),
+      call_attempts: (lead.call_attempts || 0) + 1,
       last_call_date: new Date().toISOString(),
     })
     .eq('id', lead.id);
