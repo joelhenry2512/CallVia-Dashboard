@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Duplicate files from IDE flattening
+app-*.ts
+app-*.tsx
