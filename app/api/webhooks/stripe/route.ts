@@ -3,19 +3,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+    apiVersion: '2023-10-16',
+  });
+}
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripe();
+    const supabase = getSupabase();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder';
+    
     const body = await request.text();
     const signature = request.headers.get('stripe-signature')!;
 
@@ -42,15 +48,15 @@ export async function POST(request: NextRequest) {
     // Process based on event type
     switch (event.type) {
       case 'invoice.paid':
-        await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        await handleInvoicePaid(event.data.object as Stripe.Invoice, supabase);
         break;
       
       case 'invoice.payment_failed':
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, supabase);
         break;
       
       case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription, supabase);
         break;
       
       default:
@@ -67,7 +73,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
+async function handleInvoicePaid(invoice: Stripe.Invoice, supabase: any) {
   // Find the invoice in our database
   const { data: dbInvoice } = await supabase
     .from('invoices')
@@ -107,7 +113,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, supabase: any) {
   // Update invoice status
   await supabase
     .from('invoices')
@@ -118,7 +124,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log('Invoice payment failed:', invoice.id);
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, supabase: any) {
   // Find client by Stripe customer ID
   const { data: client } = await supabase
     .from('clients')

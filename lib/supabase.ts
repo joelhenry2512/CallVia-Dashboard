@@ -1,16 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
+// Lazy initialization to avoid build-time errors
+const getSupabaseUrl = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321';
+  return url;
+};
+
+const getSupabaseAnonKey = () => {
+  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key';
+};
+
+const getSupabaseServiceKey = () => {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key';
+};
+
 // Client-side Supabase client
 export const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  getSupabaseUrl(),
+  getSupabaseAnonKey()
 );
 
 // Server-side Supabase client with service role
 export const supabaseAdmin = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  getSupabaseUrl(),
+  getSupabaseServiceKey(),
   {
     auth: {
       autoRefreshToken: false,

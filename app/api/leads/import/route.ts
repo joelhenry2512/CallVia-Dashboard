@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Papa from 'papaparse';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+}
 
 interface LeadRow {
   first_name?: string;
@@ -18,6 +20,7 @@ interface LeadRow {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const clientId = formData.get('client_id') as string;

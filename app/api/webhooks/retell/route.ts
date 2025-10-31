@@ -2,13 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const payload = await request.json();
     const eventType = payload.event_type;
 
@@ -23,15 +26,15 @@ export async function POST(request: NextRequest) {
     // Process based on event type
     switch (eventType) {
       case 'call.started':
-        await handleCallStarted(payload);
+        await handleCallStarted(payload, supabase);
         break;
       
       case 'call.ended':
-        await handleCallEnded(payload);
+        await handleCallEnded(payload, supabase);
         break;
       
       case 'call.analyzed':
-        await handleCallAnalyzed(payload);
+        await handleCallAnalyzed(payload, supabase);
         break;
       
       default:
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCallStarted(payload: any) {
+async function handleCallStarted(payload: any, supabase: any) {
   const { call_id, agent_id, from_number, to_number } = payload;
 
   // Find the lead by phone number
@@ -85,7 +88,7 @@ async function handleCallStarted(payload: any) {
     .eq('id', lead.id);
 }
 
-async function handleCallEnded(payload: any) {
+async function handleCallEnded(payload: any, supabase: any) {
   const {
     call_id,
     end_timestamp,
@@ -131,7 +134,7 @@ async function handleCallEnded(payload: any) {
   });
 }
 
-async function handleCallAnalyzed(payload: any) {
+async function handleCallAnalyzed(payload: any, supabase: any) {
   const { call_id, call_analysis } = payload;
 
   // Get the call log

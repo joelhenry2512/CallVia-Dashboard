@@ -2,13 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const payload = await request.json();
     const eventType = payload.triggerEvent;
 
@@ -23,15 +26,15 @@ export async function POST(request: NextRequest) {
     // Process based on event type
     switch (eventType) {
       case 'BOOKING_CREATED':
-        await handleBookingCreated(payload);
+        await handleBookingCreated(payload, supabase);
         break;
       
       case 'BOOKING_RESCHEDULED':
-        await handleBookingRescheduled(payload);
+        await handleBookingRescheduled(payload, supabase);
         break;
       
       case 'BOOKING_CANCELLED':
-        await handleBookingCancelled(payload);
+        await handleBookingCancelled(payload, supabase);
         break;
       
       default:
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleBookingCreated(payload: any) {
+async function handleBookingCreated(payload: any, supabase: any) {
   const {
     uid,
     startTime,
@@ -104,7 +107,7 @@ async function handleBookingCreated(payload: any) {
   await scheduleReminders(appointment.id, startTimeDate.toISOString());
 }
 
-async function handleBookingRescheduled(payload: any) {
+async function handleBookingRescheduled(payload: any, supabase: any) {
   const { uid, startTime, endTime } = payload;
   
   const startTimeDate = new Date(startTime);
@@ -136,7 +139,7 @@ async function handleBookingRescheduled(payload: any) {
   await scheduleReminders(appointment.id, startTimeDate.toISOString());
 }
 
-async function handleBookingCancelled(payload: any) {
+async function handleBookingCancelled(payload: any, supabase: any) {
   const { uid } = payload;
 
   const { data: appointment } = await supabase

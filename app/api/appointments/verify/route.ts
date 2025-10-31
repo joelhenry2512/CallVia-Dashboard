@@ -2,13 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key'
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const body = await request.json();
     const { appointment_id, verified_by, status } = body;
 
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // If marked as shown, check for milestone
     if (status === 'shown') {
-      await checkMilestone(appointment.client_id);
+      await checkMilestone(appointment.client_id, supabase);
     }
 
     // If marked as no-show, trigger rebook flow
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function checkMilestone(clientId: string) {
+async function checkMilestone(clientId: string, supabase: any) {
   // Get client settings
   const { data: client } = await supabase
     .from('clients')
@@ -120,15 +123,16 @@ async function checkMilestone(clientId: string) {
 
       // Create Stripe invoice
       if (milestone) {
-        await createMilestoneInvoice(clientId, milestone);
+        await createMilestoneInvoice(clientId, milestone, supabase);
       }
     }
   }
 }
 
-async function createMilestoneInvoice(clientId: string, milestone: any) {
+async function createMilestoneInvoice(clientId: string, milestone: any, supabase: any) {
   const Stripe = require('stripe');
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
+  const stripe = new Stripe(stripeKey);
 
   // Get client
   const { data: client } = await supabase
